@@ -1,0 +1,42 @@
+<project name="com.plpatterns.status"
+         default="install"
+         xmlns:mvn="urn:maven-artifact-ant">
+
+  <property name="build.dir"     location="classes"/>
+  <property name="bin.dir"       location="bin"/>
+  <property name="lib.dir"       location="lib"/>
+  <property name="java.src.dir"  location="src/main/java"/>
+
+  <property name="version.label"  value="0.1-SNAPSHOT"/>
+  <property name="output.jar"     location="status-${version.label}.jar"/>
+
+  <path id="classpath">
+    <pathelement location="${java.src.dir}"/>
+    <pathelement location="${build.dir}"/>
+    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+  </path>
+
+  <target name="install" depends="jar"/>
+
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${build.dir}"/>
+  </target>
+
+  <target name="compile" depends="init"
+          description="Compile sources.">
+    <javac srcdir="${java.src.dir}" destdir="${build.dir}"
+           classpathref="classpath"/>
+  </target>
+
+  <target name="jar" depends="compile"
+          description="Compile sources into a single jar.">
+    <jar destfile="${output.jar}" basedir="${build.dir}" />
+  </target>
+
+  <target name="clean" description="Remove generated files">
+    <delete dir="${build.dir}"/>
+    <delete file="${output.jar}"/>
+  </target>
+
+</project>
