@@ -26,7 +26,8 @@
   <target name="compile" depends="init"
           description="Compile sources.">
     <javac srcdir="${java.src.dir}" destdir="${build.dir}"
-           classpathref="classpath"/>
+           classpathref="classpath"
+           source="1.5"/>
   </target>
 
   <target name="jar" depends="compile"
