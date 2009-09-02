@@ -2,10 +2,15 @@ package com.plpatterns.status;
 
 import java.util.Date;
 
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.XMPPException;
 
 public class Conversation {
+  
+  private static final Log LOG = LogFactory.getLog(Conversation.class);
   
   private static final long DEFAULT_MIN_MILLIS_BETWEEN_MESSAGES = 30 * 1000L;
   
@@ -75,12 +80,18 @@ public class Conversation {
    */
   public void sendIm(String msg) {
     try {
+      LOG.info("trying to send IM to " + getChat().getParticipant() + ": " + msg);
       setLastSentTo(new Date());
       getChat().sendMessage(msg);
     }
     catch (XMPPException e) {
       // ignore
     }
+  }
+  
+  @Override
+  public String toString() {
+    return ReflectionToStringBuilder.toString(this);
   }
 
 }

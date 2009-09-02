@@ -21,7 +21,6 @@ import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.SASLAuthentication;
 import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 
 
@@ -45,10 +44,11 @@ public class XmppAppender extends AppenderSkeleton {
   private String _password;
   private String _resource;
   private XMPPConnection _con;
-  private LinkedList<Conversation> _conversations;
+  private LinkedList<Conversation> _conversations = new LinkedList<Conversation>();
   
   public XmppAppender() {
     // Default constructor for log4j.
+    LOG.warn("XMPP Appender created");
   }
   
   public XmppAppender(String serverHostname, int serverPort,
@@ -64,11 +64,12 @@ public class XmppAppender extends AppenderSkeleton {
     _fromAddress = fromAddress;
     _password = password;
     _resource = resource;
-    _con = null;
-    _conversations = new LinkedList<Conversation>();
+    LOG.warn("XMPP Appender created with good constructor!");
   }
 
   public void connect() {
+    LOG.warn("Trying to connect...");
+    
     XMPPConnection con = getConnection();
     if (con == null) {
       con = _con = new XMPPConnection(getConnectionConfiguration());
@@ -77,21 +78,25 @@ public class XmppAppender extends AppenderSkeleton {
     if (con.isAuthenticated()) return;
     
     try {
-      // Add listener to capture IMs sent to us.
-      con.getChatManager().addChatListener(new XmppChatManagerListener());
-      
       // Connect to server.
+      LOG.warn("Connecting...");
       con.connect();
       
+      // Add listener to capture IMs sent to us.
+      LOG.warn("Adding chat listener...");
+      con.getChatManager().addChatListener(new XmppChatManagerListener());
+      
       // Login.
+      LOG.warn("Logging in...");
       SASLAuthentication.supportSASLMechanism("PLAIN", 0);
       con.login(getFromAddress(), getPassword(), getResource());
+      
+      LOG.warn("Logged in!  Authenticated? " + con.isAuthenticated());
     }
-    catch (XMPPException e) {
-      if (LOG.isWarnEnabled()) {
-        LOG.warn("connecting and logging in to XMPP server failed using connection configuration " + _conConfig,
-                e);
-      }
+    catch (Throwable t) {
+      LOG.warn("connecting and logging in to XMPP server failed using connection configuration host: " + _conConfig.getHost()
+               + " port: " + _conConfig.getPort() + " serviceName: " + _conConfig.getServiceName(),
+               t);
       setNotificationFailedRecently(true);
     }
   }
@@ -99,12 +104,17 @@ public class XmppAppender extends AppenderSkeleton {
   @Override
   public void close() {
     if (getConnection() != null) {
+      LOG.debug("Disconnecting...");
       getConnection().disconnect();
     }
   }
 
   @Override
   protected void append(LoggingEvent event) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Appending event: " + event);
+    }
+    
     if (!shouldNotify()) return;
 
     String msg = getMessage(event);
@@ -166,6 +176,8 @@ public class XmppAppender extends AppenderSkeleton {
    * connect.
    */
   private void attemptToConnect() {
+    LOG.warn("Attempting to connect....");
+    
     if (// No connection configuration
         getConnectionConfiguration() == null &&
         (getServerHostname() == null || getServerPort() == 0 ||
@@ -328,6 +340,7 @@ public class XmppAppender extends AppenderSkeleton {
      *                       false if it wasn't.
      */
     public void chatCreated(Chat chat, boolean createdLocally) {
+      LOG.debug("chatCreated chat.threadID: " + chat.getThreadID() + " createdLocally: " + createdLocally);
       chat.addMessageListener(new XmppMessageListener());
     }
     
@@ -339,44 +352,60 @@ public class XmppAppender extends AppenderSkeleton {
     private static final int MAX_DAYS_TO_NOTIFY_OF_EVICTION = 4;
 
     public void processMessage(Chat chat, Message message) {
+      LOG.debug("processMessage chat.threadID: " + chat.getThreadID()
+              + " message.from: " + message.getFrom()
+              + " message.body: " + message.getBody()
+              + " message.subject: " + message.getSubject()
+              + " message: " + message);
       Conversation convo;
       boolean newConvo = false;
       Conversation oldConvo = null;
       
-      // To allow this to be called from multiple threads, we must lock the
-      // conversations when we muck with them.
-      synchronized (getConversations()) {
-        // Get the conversation.
-        convo = removeConversation(chat.getThreadID());
-        if (convo == null) {
-          convo = new Conversation(chat);
-          newConvo = true;
+      try {
+        // To allow this to be called from multiple threads, we must lock the
+        // conversations when we muck with them.
+        LOG.debug("getting lock on conversations...");
+        synchronized (getConversations()) {
+          LOG.debug("got lock on conversations");
+
+          // Get the conversation.
+          convo = removeConversation(chat.getThreadID());
+          if (convo == null) {
+            LOG.debug("new conversation with thread ID " + chat.getThreadID());
+            convo = new Conversation(chat);
+            newConvo = true;
+          }
+
+          // Add this conversation to the front of the list.
+          getConversations().addFirst(convo);
+
+          // Evict old conversations.
+          LOG.debug("number of conversations: " + getConversations().size());
+          if (getConversations().size() > MAX_CONVERSATIONS) {
+            oldConvo = getConversations().removeLast();
+          }
         }
 
-        // Add this conversation to the front of the list.
-        getConversations().addFirst(convo);
+        // Track when we've heard from this person.
+        LOG.debug("setting last heard from...");
+        convo.setLastHeardFrom(new Date());
 
-        // Evict old conversations.
-        if (getConversations().size() > MAX_CONVERSATIONS) {
-          oldConvo = getConversations().removeLast();
+        // Process the message itself.
+        reactToIm(convo, newConvo, message);
+
+        // Let the person know we're evicting them.
+        if (oldConvo != null) {
+          // Don't send this if we haven't heard from this person in a long time.
+          Calendar cal = Calendar.getInstance();
+          cal.add(Calendar.DATE, -MAX_DAYS_TO_NOTIFY_OF_EVICTION);
+          if (oldConvo.getLastHeardFrom().after(cal.getTime())) {
+            oldConvo.sendIm("I'm holding a conversation with " + MAX_CONVERSATIONS +
+            " other people, so I'll talk to you later.");
+          }
         }
       }
-
-      // Track when we've heard from this person.
-      convo.setLastHeardFrom(new Date());
-      
-      // Process the message itself.
-      reactToIm(convo, newConvo, message);
-      
-      // Let the person know we're evicting them.
-      if (oldConvo != null) {
-        // Don't send this if we haven't heard from this person in a long time.
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -MAX_DAYS_TO_NOTIFY_OF_EVICTION);
-        if (oldConvo.getLastHeardFrom().after(cal.getTime())) {
-          oldConvo.sendIm("I'm holding a conversation with " + MAX_CONVERSATIONS +
-                  " other people, so I'll talk to you later.");
-        }
+      catch (Throwable t) {
+        LOG.error(t);
       }
     }
 
@@ -389,6 +418,7 @@ public class XmppAppender extends AppenderSkeleton {
      */
     private void reactToIm(Conversation convo, boolean newConvo, Message message) {
       String msg = message.getBody();
+      LOG.debug("reacting to IM... convo: " + convo + " newConvo: " + newConvo + " msg: " + msg);
       if (StringUtils.isBlank(msg)) return;
       
       if (msg.equalsIgnoreCase("pause") || msg.equalsIgnoreCase("stop")) {
