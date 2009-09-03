@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.AppenderSkeleton;
@@ -23,7 +22,9 @@ import org.jivesoftware.smack.SASLAuthentication;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.Message;
 
-
+/**
+ * @author Jonathan Tran
+ */
 public class XmppAppender extends AppenderSkeleton {
 
   private static final Log LOG = LogFactory.getLog(XmppAppender.class);
@@ -138,7 +139,7 @@ public class XmppAppender extends AppenderSkeleton {
         if (!conversation.shouldNotify()) continue;
         
         // Send the IM.
-        conversation.getChat().sendMessage(msg);
+        conversation.sendIm(msg);
       }
     }
     catch (Throwable t) {
@@ -160,7 +161,7 @@ public class XmppAppender extends AppenderSkeleton {
       try {
         return ((Callable<?>)msg).call().toString();
       }
-      catch (Exception e) {
+      catch (Throwable t) {
         return "";
       }
     }
@@ -202,7 +203,7 @@ public class XmppAppender extends AppenderSkeleton {
       connect();
     }
     catch (Throwable t) {
-      // ignore.
+      LOG.error(t);
     }
   }
   
@@ -351,6 +352,9 @@ public class XmppAppender extends AppenderSkeleton {
     /** I wanted this to last over a long weekend, so it is {@value} */
     private static final int MAX_DAYS_TO_NOTIFY_OF_EVICTION = 4;
 
+    /**
+     * Event fired whenever we receive an IM.
+     */
     public void processMessage(Chat chat, Message message) {
       LOG.debug("processMessage chat.threadID: " + chat.getThreadID()
               + " message.from: " + message.getFrom()
@@ -419,10 +423,9 @@ public class XmppAppender extends AppenderSkeleton {
     private void reactToIm(Conversation convo, boolean newConvo, Message message) {
       String msg = message.getBody();
       LOG.debug("reacting to IM... convo: " + convo + " newConvo: " + newConvo + " msg: " + msg);
-      if (StringUtils.isBlank(msg)) return;
+      if (isBlank(msg)) return;
       
       if (msg.equalsIgnoreCase("pause") || msg.equalsIgnoreCase("stop")) {
-        //Logger.getLogger(TOP_LEVEL_LOGGER_NAME).setLevel(Level.ERROR);
         convo.setPaused(true);
       }
       else if (msg.equalsIgnoreCase("resume") || msg.equalsIgnoreCase("start")) {
