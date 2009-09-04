@@ -5,7 +5,7 @@
   <property name="build.dir"     location="classes"/>
   <property name="bin.dir"       location="bin"/>
   <property name="lib.dir"       location="lib"/>
-  <property name="java.src.dir"  location="src/main/java"/>
+  <property name="java.src.dir"  location="src/java"/>
 
   <property name="version.label"  value="0.1-SNAPSHOT"/>
   <property name="output.jar"     location="status-${version.label}.jar"/>
