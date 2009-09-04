@@ -118,10 +118,6 @@ public class XmppAppender extends AppenderSkeleton {
 
   @Override
   protected void append(LoggingEvent event) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Appending event: " + event);
-    }
-    
     if (!shouldNotify()) return;
 
     String msg = getMessage(event);
@@ -333,10 +329,10 @@ public class XmppAppender extends AppenderSkeleton {
     if (hours   >= 10d) return String.format("%d hours", Math.round(hours));
     if (hours   >   1d) return String.format("%.1f hours", hours);
     if (hours   ==  1d) return "hour";
-    if (minutes >= 10d) return String.format("%d minutes", Math.round(minutes));
+    if (minutes >=  2d) return String.format("%d minutes", Math.round(minutes));
     if (minutes >   1d) return String.format("%.1f minutes", minutes);
     if (minutes ==  1d) return "minute";
-    if (seconds >= 10d) return String.format("%d seconds", Math.round(seconds));
+    if (seconds >=  2d) return String.format("%d seconds", Math.round(seconds));
     if (seconds >   1d) return String.format("%.1f seconds", seconds);
     if (seconds ==  1d) return "second";
     if (millis  >   1 ) return String.format("%d milliseconds", millis);
