@@ -453,6 +453,7 @@ public class XmppAppender extends AppenderSkeleton {
         final Pattern everyPattern = Pattern.compile("every\\s+(\\w+)\\s+(\\w+)\\s*");
         
         // Try to match the basic format.
+        LOG.debug("Trying to parse change in interval.");
         Matcher matcher = everyPattern.matcher(msg);
         if (!matcher.matches()) {
           convo.sendIm(iDontUnderstand);
@@ -460,15 +461,17 @@ public class XmppAppender extends AppenderSkeleton {
         }
         
         // Try to parse the number and units.
+        LOG.debug("Basic structure found.  Trying to parse number and unit.");
         String strNumber = matcher.group(1).toLowerCase();
         String strUnits  = matcher.group(2).toLowerCase();
         Double num = Double.valueOf(strNumber);
-        if (num == null || !strUnits.startsWith("s") || !strUnits.startsWith("m")) {
+        if (num == null || !strUnits.startsWith("s") && !strUnits.startsWith("m")) {
           convo.sendIm(iDontUnderstand);
           return;
         }
         
         // Convert to milliseconds.
+        LOG.debug("Interval found: " + num + " " + strUnits);
         if (strUnits.startsWith("m")) {
           num *= 60d;
         }
