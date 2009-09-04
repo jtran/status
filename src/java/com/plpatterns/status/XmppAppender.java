@@ -295,11 +295,11 @@ public class XmppAppender extends AppenderSkeleton {
     return false;
   }
   
-  private Conversation removeConversation(String threadId) {
+  private Conversation removeConversation(String participant) {
     Iterator<Conversation> it = getConversations().iterator();
     while (it.hasNext()) {
       Conversation convo = it.next();
-      if (threadId.equals(convo.getChat().getThreadID())) {
+      if (participant.equals(convo.getChat().getParticipant())) {
         it.remove();
         return convo;
       }
@@ -341,7 +341,8 @@ public class XmppAppender extends AppenderSkeleton {
      *                       false if it wasn't.
      */
     public void chatCreated(Chat chat, boolean createdLocally) {
-      LOG.debug("chatCreated chat.threadID: " + chat.getThreadID() + " createdLocally: " + createdLocally);
+      LOG.debug("chatCreated chat.participant: " + chat.getParticipant() +
+              " chat.threadID: " + chat.getThreadID() + " createdLocally: " + createdLocally);
       chat.addMessageListener(new XmppMessageListener());
     }
     
@@ -373,9 +374,9 @@ public class XmppAppender extends AppenderSkeleton {
           LOG.debug("got lock on conversations");
 
           // Get the conversation.
-          convo = removeConversation(chat.getThreadID());
+          convo = removeConversation(chat.getParticipant());
           if (convo == null) {
-            LOG.debug("new conversation with thread ID " + chat.getThreadID());
+            LOG.debug("new conversation with participant " + chat.getParticipant());
             convo = new Conversation(chat);
             newConvo = true;
           }

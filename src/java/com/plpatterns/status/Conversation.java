@@ -8,6 +8,9 @@ import org.apache.commons.logging.LogFactory;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.XMPPException;
 
+/**
+ * @author Jonathan Tran (jtran)
+ */
 public class Conversation {
   
   private static final Log LOG = LogFactory.getLog(Conversation.class);
