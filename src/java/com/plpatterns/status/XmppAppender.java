@@ -70,35 +70,41 @@ public class XmppAppender extends AppenderSkeleton {
 
   public void connect() {
     LOG.warn("Trying to connect...");
-    
-    XMPPConnection con = getConnection();
-    if (con == null) {
-      con = _con = new XMPPConnection(getConnectionConfiguration());
-    }
-    
-    if (con.isAuthenticated()) return;
-    
-    try {
-      // Connect to server.
-      LOG.warn("Connecting...");
-      con.connect();
-      
-      // Add listener to capture IMs sent to us.
-      LOG.warn("Adding chat listener...");
-      con.getChatManager().addChatListener(new XmppChatManagerListener());
-      
-      // Login.
-      LOG.warn("Logging in...");
-      SASLAuthentication.supportSASLMechanism("PLAIN", 0);
-      con.login(getFromAddress(), getPassword(), getResource());
-      
-      LOG.warn("Logged in!  Authenticated? " + con.isAuthenticated());
-    }
-    catch (Throwable t) {
-      LOG.warn("connecting and logging in to XMPP server failed using connection configuration host: " + _conConfig.getHost()
-               + " port: " + _conConfig.getPort() + " serviceName: " + _conConfig.getServiceName(),
-               t);
-      setNotificationFailedRecently(true);
+
+    // Must synchronize since this gets called from multiple threads.
+    synchronized (this) {
+      XMPPConnection con = getConnection();
+      if (con == null) {
+        LOG.debug("created new XMPPConnection object");
+        con = new XMPPConnection(getConnectionConfiguration());
+        setConnection(con);
+      }
+
+      LOG.warn("Authenticated? " + con.isAuthenticated() + " con: " + _con);
+      if (con.isAuthenticated()) return;
+
+      try {
+        // Connect to server.
+        LOG.warn("Connecting...");
+        con.connect();
+
+        // Add listener to capture IMs sent to us.
+        LOG.warn("Adding chat listener...");
+        con.getChatManager().addChatListener(new XmppChatManagerListener());
+
+        // Login.
+        LOG.warn("Logging in...");
+        SASLAuthentication.supportSASLMechanism("PLAIN", 0);
+        con.login(getFromAddress(), getPassword(), getResource());
+
+        LOG.warn("Logged in!  Authenticated? " + con.isAuthenticated());
+      }
+      catch (Throwable t) {
+        LOG.warn("connecting and logging in to XMPP server failed using connection configuration host: " + _conConfig.getHost()
+                + " port: " + _conConfig.getPort() + " serviceName: " + _conConfig.getServiceName(),
+                t);
+        setNotificationFailedRecently(true);
+      }
     }
   }
 
@@ -198,7 +204,6 @@ public class XmppAppender extends AppenderSkeleton {
         setConnectionConfiguration(new ConnectionConfiguration(
                 getServerHostname(), getServerPort(), getServiceName()));
       }
-      _con = new XMPPConnection(getConnectionConfiguration());
 
       connect();
     }
@@ -207,12 +212,16 @@ public class XmppAppender extends AppenderSkeleton {
     }
   }
   
-  private LinkedList<Conversation> getConversations() {
+  public LinkedList<Conversation> getConversations() {
     return _conversations;
   }
   
-  private XMPPConnection getConnection() {
+  public XMPPConnection getConnection() {
     return _con;
+  }
+  
+  private void setConnection(XMPPConnection con) {
+    _con = con;
   }
   
   public ConnectionConfiguration getConnectionConfiguration() {
@@ -221,6 +230,10 @@ public class XmppAppender extends AppenderSkeleton {
   
   public void setConnectionConfiguration(ConnectionConfiguration conConfig) {
     _conConfig = conConfig;
+    
+    // Refresh connection.
+    close();
+    setConnection(null);
     attemptToConnect();
   }
   
