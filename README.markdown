@@ -11,6 +11,12 @@ just when they choose.
 Your app does not need to concern itself with throttling, per user
 settings, or even the fact that IMs are being sent.
 
+Add the app to your contact list and know exactly when your app is up
+and running or down, even from home.
+
+It's also great for non-tech-savvy users.  If a person can IM through
+Gmail, they can check status.
+
 # Install
 
 Status can currently be built with either `ant` or `mvn`.  If you use
@@ -36,6 +42,10 @@ configuration, specifying the account your app should send IMs from.
       <priority value="DEBUG"/>
       <appender-ref ref="GTALK"/>
     </category>
+
+If you want to use an XMPP service other than Gtalk, use the
+XmppAppender class which takes more options, all of which are
+required.
 
 # Usage
 
