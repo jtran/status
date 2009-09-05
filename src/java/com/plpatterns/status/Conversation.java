@@ -76,15 +76,26 @@ public class Conversation {
     return !isPaused() &&
       getLastSentTo().getTime() + getMinMillisecondsBetweenMessages() <= new Date().getTime();
   }
-  
+
   /**
-   * Sends an IM, ignoring any errors.  Updates last-sent-to timestamp.
-   * TODO: Track errors.
+   * Sends an IM, ignoring any errors.
    */
   public void sendIm(String msg) {
+    sendIm(msg, false);
+  }
+  
+  /**
+   * Sends an IM, ignoring any errors.  Optionally updates
+   * last-sent-to timestamp used for throttling.
+   *
+   * TODO: Track errors.
+   */
+  public void sendIm(String msg, boolean updateLastSentToTime) {
     try {
       LOG.info("trying to send IM to " + getChat().getParticipant() + ": " + msg);
-      setLastSentTo(new Date());
+      if (updateLastSentToTime) {
+        setLastSentTo(new Date());
+      }
       getChat().sendMessage(msg);
     }
     catch (XMPPException e) {

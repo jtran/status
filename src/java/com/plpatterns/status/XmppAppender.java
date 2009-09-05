@@ -141,7 +141,7 @@ public class XmppAppender extends AppenderSkeleton {
         if (!conversation.shouldNotify()) continue;
         
         // Send the IM.
-        conversation.sendIm(msg);
+        conversation.sendIm(msg, true);
       }
     }
     catch (Throwable t) {
