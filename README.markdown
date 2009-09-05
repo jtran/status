@@ -14,10 +14,14 @@ settings, or even the fact that IMs are being sent.
 # Install
 
 Status can currently be built with either `ant` or `mvn`.  If you use
+`ant`, the jar will be output in the current directory.  If you use
 `mvn`, the jar will be output to the target/ directory.
 
 If you are using an app server like JBoss, drop status.jar into its
-lib/ directory (the sibling of the deploy/ directory).
+lib/ directory (the sibling of the deploy/ directory).  You will also
+need to drop in any dependent jars, like smack.jar, if they are not
+already provided by your app server.  These are all included in the
+lib/ directory of this repo.
 
 Add something like the following to your app's log4j.xml
 configuration, specifying the account your app should send IMs from.
