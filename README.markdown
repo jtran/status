@@ -52,9 +52,14 @@ information.
     
     ...
     
-    private static final Log STATUS = LogFactory.getLog("status." + ThisClass.class);
+    private static final Log STATUS = LogFactory.getLog("status." + ThisClass.class.getCanonicalName());
     
-    STATUS.info("Done " + percent + "%");
+    ...
+    
+    while (makingProgress()) {
+      doWork();
+      STATUS.info("Done " + percentDone() + "%");
+    }
 
 To get status updates sent to you, IM "myAppUsername@gmail.com".  Just
 say "hi", or any greeting you feel like, and status will start
@@ -83,8 +88,8 @@ sent as an IM, and so on.  Status either forwards a logged message or
 drops it; it does not store status messages until the time limit has
 passed.
 
-The time period is per user, so different people can monitor the app
-at different intervals.
+The time period is per IM address, so different people can monitor the
+app at different intervals.
 
 You can pause IMs at any time by IMing ...
 
