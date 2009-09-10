@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.AppenderSkeleton;
@@ -161,14 +162,14 @@ public class XmppAppender extends AppenderSkeleton {
     
     if (msg instanceof Callable) {
       try {
-        return ((Callable<?>)msg).call().toString();
+        return ObjectUtils.toString(((Callable<?>)msg).call());
       }
       catch (Throwable t) {
         return "";
       }
     }
     
-    return msg.toString();
+    return ObjectUtils.toString(msg);
   }
 
 
