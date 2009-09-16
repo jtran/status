@@ -1,5 +1,6 @@
 package com.plpatterns.status;
 
+import static com.plpatterns.status.Utils.formatPeriod;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 import java.util.Calendar;
@@ -317,29 +318,6 @@ public class XmppAppender extends AppenderSkeleton {
     return null;
   }
   
-  /**
-   * Formats the given milliseconds into a human-readable amount.
-   * 
-   * @param millis must be greater than zero.
-   */
-  private static String formatPeriod(long millis) {
-    double seconds = millis / 1000.0d;
-    double minutes = seconds / 60.0d;
-    double hours   = minutes / 60.0d;
-    
-    if (hours   >= 10d) return String.format("%d hours", Math.round(hours));
-    if (hours   >   1d) return String.format("%.1f hours", hours);
-    if (hours   ==  1d) return "hour";
-    if (minutes >=  2d) return String.format("%d minutes", Math.round(minutes));
-    if (minutes >   1d) return String.format("%.1f minutes", minutes);
-    if (minutes ==  1d) return "minute";
-    if (seconds >=  2d) return String.format("%d seconds", Math.round(seconds));
-    if (seconds >   1d) return String.format("%.1f seconds", seconds);
-    if (seconds ==  1d) return "second";
-    if (millis  >   1 ) return String.format("%d milliseconds", millis);
-    return "millisecond";
-  }
-  
   private class XmppChatManagerListener implements ChatManagerListener {
 
     /**
@@ -481,6 +459,9 @@ public class XmppAppender extends AppenderSkeleton {
         // Set new period.
         convo.sendIm("ok, i'll send updates every " + formatPeriod(period));
         convo.setMinMillisecondsBetweenMessages(period);
+      }
+      else if (msg.equalsIgnoreCase("status") || msg.equalsIgnoreCase("st")) {
+        convo.sendIm(convo.toHumanReadableString());
       }
       else if (msg.startsWith("echo")) {
         convo.sendIm(msg);

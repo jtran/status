@@ -103,6 +103,13 @@ public class Conversation {
     }
   }
   
+  public String toHumanReadableString() {
+    return String.format("paused: %s, lastSentTo: %s, minInterval: %s",
+            isPaused(),
+            getLastSentTo(),
+            Utils.formatPeriod(getMinMillisecondsBetweenMessages()));
+  }
+  
   @Override
   public String toString() {
     return ReflectionToStringBuilder.toString(this);
