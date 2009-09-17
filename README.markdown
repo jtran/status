@@ -112,3 +112,6 @@ You can pause IMs at any time by IMing ...
 ... and resume them by IMing ...
 
     start
+
+See the [wiki](http://wiki.github.com/jtran/status) for more commands.
+
