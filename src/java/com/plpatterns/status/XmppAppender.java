@@ -425,7 +425,7 @@ public class XmppAppender extends AppenderSkeleton {
       else if (msg.startsWith("every ")) {
         // Change the period at which IMs are sent.
         final String iDontUnderstand = "I don't understand.  If you'd rather I sent you IMs more often or less often, just let me know by saying \"every 5 minutes\", for example.";
-        final Pattern everyPattern = Pattern.compile("every\\s+(\\w+)\\s+(\\w+)\\s*");
+        final Pattern everyPattern = Pattern.compile("every\\s+([\\w\\.]+)\\s+(\\w+)\\s*");
         
         // Try to match the basic format.
         LOG.debug("Trying to parse change in interval.");
