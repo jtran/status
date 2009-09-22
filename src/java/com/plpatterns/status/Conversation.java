@@ -74,7 +74,8 @@ public class Conversation {
 
   public boolean shouldNotify() {
     return !isPaused() &&
-      getLastSentTo().getTime() + getMinMillisecondsBetweenMessages() <= new Date().getTime();
+      (getLastSentTo() == null ||
+       getLastSentTo().getTime() + getMinMillisecondsBetweenMessages() <= new Date().getTime());
   }
 
   /**
