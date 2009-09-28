@@ -5,6 +5,8 @@ import java.util.Date;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Level;
+import org.apache.log4j.spi.LoggingEvent;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.XMPPException;
 
@@ -22,6 +24,7 @@ public class Conversation {
   private Date _lastHeardFrom;
   private Date _lastSentTo;
   private long _minMillisecondsBetweenMessages;
+  private Level _alwaysNotifyAtLevel;
   
   public Conversation(Chat chat) {
     _chat = chat;
@@ -29,6 +32,7 @@ public class Conversation {
     _lastHeardFrom = null;
     _lastSentTo = null;
     _minMillisecondsBetweenMessages = DEFAULT_MIN_MILLIS_BETWEEN_MESSAGES;
+    _alwaysNotifyAtLevel = Level.WARN;
   }
 
   public Chat getChat() {
@@ -72,9 +76,21 @@ public class Conversation {
     _minMillisecondsBetweenMessages = minMillisecondsBetweenMessages;
   }
 
-  public boolean shouldNotify() {
+  public Level getAlwaysNotifyAtLevel() {
+    return _alwaysNotifyAtLevel;
+  }
+
+  public void setAlwaysNotifyAtLevel(Level alwaysNotifyAtLevel) {
+    _alwaysNotifyAtLevel = alwaysNotifyAtLevel;
+  }
+
+  public boolean shouldNotify(LoggingEvent event) {
     return !isPaused() &&
-      (getLastSentTo() == null ||
+      (// Level is high enough that we don't use throttling.
+       event.getLevel().isGreaterOrEqual(getAlwaysNotifyAtLevel()) ||
+       // We never sent to this user before.
+       getLastSentTo() == null ||
+       // It has been long enough since the last time we sent an IM to this user.
        getLastSentTo().getTime() + getMinMillisecondsBetweenMessages() <= new Date().getTime());
   }
 

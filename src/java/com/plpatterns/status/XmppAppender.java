@@ -15,6 +15,7 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManagerListener;
@@ -32,8 +33,6 @@ public class XmppAppender extends AppenderSkeleton {
   private static final Log LOG = LogFactory.getLog(XmppAppender.class);
   
   private static final int MAX_CONVERSATIONS = 50;
-  
-  //public static String TOP_LEVEL_LOGGER_NAME = "status";
 
   // TODO: {change this to a timestamp, and retry after a while. Ideally,
   // exponential back-off.}
@@ -140,7 +139,7 @@ public class XmppAppender extends AppenderSkeleton {
     try {
       // Send notification to all conversations.
       for (Conversation conversation : getConversations()) {
-        if (!conversation.shouldNotify()) continue;
+        if (!conversation.shouldNotify(event)) continue;
         
         // Send the IM.
         conversation.sendIm(msg, true);
