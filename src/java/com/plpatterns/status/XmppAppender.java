@@ -156,7 +156,7 @@ public class XmppAppender extends AppenderSkeleton {
   private static String getMessage(LoggingEvent event) {
     Object msg = event.getMessage();
     
-    if (msg instanceof Callable) {
+    if (msg instanceof Callable<?>) {
       try {
         return ObjectUtils.toString(((Callable<?>)msg).call());
       }
