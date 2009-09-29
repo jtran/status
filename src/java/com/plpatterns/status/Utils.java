@@ -1,5 +1,7 @@
 package com.plpatterns.status;
 
+import java.io.Closeable;
+
 public class Utils {
   
   private Utils() {}
@@ -25,6 +27,18 @@ public class Utils {
     if (seconds ==  1d) return "second";
     if (millis  >   1 ) return String.format("%d milliseconds", millis);
     return "millisecond";
+  }
+  
+  public static void closeQuietly(Closeable... cs) {
+    if (cs == null) return;
+    
+    for (int i = 0; i < cs.length; i++) {
+      if (cs[i] == null) continue;
+      try {
+        cs[i].close();
+      }
+      catch (Throwable t) {}
+    }
   }
   
 }

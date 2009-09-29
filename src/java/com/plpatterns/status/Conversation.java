@@ -230,6 +230,21 @@ public class Conversation {
     else if (msg.equalsIgnoreCase("status") || msg.equalsIgnoreCase("st")) {
       sendIm(toHumanReadableString());
     }
+    else if (msg.equalsIgnoreCase("system") || msg.equalsIgnoreCase("top")) {
+      String hostname = SystemStats.getHostname();
+      String top = SystemStats.getTopOutput();
+      if (top == null) {
+        if (hostname == null) {
+          hostname = "this machine";
+        }
+        sendIm("sorry... I'm having trouble running top on " + hostname);
+      }
+      else {
+        String prelude = (hostname == null) ? ""
+                         : "System stats for " + hostname + ".\n";
+        sendIm(prelude + top);
+      }
+    }
     else if (msg.startsWith("echo")) {
       sendIm(msg);
     }
@@ -238,7 +253,7 @@ public class Conversation {
               formatPeriod(getMinMillisecondsBetweenMessages()));
     }
     else {
-      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes], set level <log-level>, status.");
+      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes], set level <log-level>, status, system.");
     }
   }
 
