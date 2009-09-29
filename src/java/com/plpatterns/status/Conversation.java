@@ -200,6 +200,32 @@ public class Conversation {
       sendIm("ok, i'll send updates every " + formatPeriod(period));
       setMinMillisecondsBetweenMessages(period);
     }
+    else if (msg.startsWith("set ")) {
+      // Change the period at which IMs are sent.
+      final String iDontUnderstand = "I don't understand.  If you'd rather I only sent you IMs above a certain log level, just let me know by saying \"set level info\", for example.";
+      final Pattern setLevelPattern = Pattern.compile("set\\s+level\\s+(\\w+)\\s*");
+      
+      // Try to match the basic format.
+      LOG.debug("Trying to parse log level.");
+      Matcher matcher = setLevelPattern.matcher(msg);
+      if (!matcher.matches()) {
+        sendIm(iDontUnderstand);
+        return;
+      }
+      
+      // Try to parse the level.
+      LOG.debug("Basic structure found.  Trying to parse the level.");
+      String strLevel = matcher.group(1).toUpperCase();
+      Level level = Level.toLevel(strLevel, getAlwaysNotifyAtLevel());
+      if (level == null) {
+        sendIm(iDontUnderstand);
+        return;
+      }
+
+      // Set new log level.
+      sendIm("ok, i'll send " + level + " updates");
+      setAlwaysNotifyAtLevel(level);
+    }
     else if (msg.equalsIgnoreCase("status") || msg.equalsIgnoreCase("st")) {
       sendIm(toHumanReadableString());
     }
@@ -211,7 +237,7 @@ public class Conversation {
               formatPeriod(getMinMillisecondsBetweenMessages()));
     }
     else {
-      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes].");
+      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes], set level <log-level>.");
     }
   }
 
