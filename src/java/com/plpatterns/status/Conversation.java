@@ -127,10 +127,11 @@ public class Conversation {
   }
   
   public String toHumanReadableString() {
-    return String.format("paused: %s, lastSentTo: %s, minInterval: %s",
+    return String.format("paused: %s, lastSentTo: %s, minInterval: %s, alwaysNotifyAtLevel: %s",
             isPaused(),
             getLastSentTo(),
-            Utils.formatPeriod(getMinMillisecondsBetweenMessages()));
+            Utils.formatPeriod(getMinMillisecondsBetweenMessages()),
+            getAlwaysNotifyAtLevel());
   }
   
   @Override
@@ -237,7 +238,7 @@ public class Conversation {
               formatPeriod(getMinMillisecondsBetweenMessages()));
     }
     else {
-      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes], set level <log-level>.");
+      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes], set level <log-level>, status.");
     }
   }
 
