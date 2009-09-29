@@ -1,15 +1,11 @@
 package com.plpatterns.status;
 
-import static com.plpatterns.status.Utils.formatPeriod;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.logging.Log;
@@ -378,12 +374,8 @@ public class XmppAppender extends AppenderSkeleton {
           }
         }
 
-        // Track when we've heard from this person.
-        LOG.debug("setting last heard from...");
-        convo.setLastHeardFrom(new Date());
-
         // Process the message itself.
-        reactToIm(convo, newConvo, message);
+        convo.reactToIm(newConvo, message);
 
         // Let the person know we're evicting them.
         if (oldConvo != null) {
@@ -398,79 +390,6 @@ public class XmppAppender extends AppenderSkeleton {
       }
       catch (Throwable t) {
         LOG.error(t);
-      }
-    }
-
-
-    /**
-     * This function processes commands in an incoming message. The responses
-     * are purposely lower-case and casual form to mimic the way people usually
-     * type IMs.  To a user, it shouldn't feel like they are talking to a bot,
-     * but rather someone on the other end helping them.
-     */
-    private void reactToIm(Conversation convo, boolean newConvo, Message message) {
-      String msg = message.getBody();
-      LOG.debug("reacting to IM... convo: " + convo + " newConvo: " + newConvo + " msg: " + msg);
-      if (isBlank(msg)) return;
-      
-      if (msg.equalsIgnoreCase("pause") || msg.equalsIgnoreCase("stop")) {
-        convo.setPaused(true);
-      }
-      else if (msg.equalsIgnoreCase("resume") || msg.equalsIgnoreCase("start")) {
-        convo.sendIm("i'll start sending updates every " +
-                formatPeriod(convo.getMinMillisecondsBetweenMessages()));
-        convo.setPaused(false);
-      }
-      else if (msg.startsWith("every ")) {
-        // Change the period at which IMs are sent.
-        final String iDontUnderstand = "I don't understand.  If you'd rather I sent you IMs more often or less often, just let me know by saying \"every 5 minutes\", for example.";
-        final Pattern everyPattern = Pattern.compile("every\\s+([\\w\\.]+)\\s+(\\w+)\\s*");
-        
-        // Try to match the basic format.
-        LOG.debug("Trying to parse change in interval.");
-        Matcher matcher = everyPattern.matcher(msg);
-        if (!matcher.matches()) {
-          convo.sendIm(iDontUnderstand);
-          return;
-        }
-        
-        // Try to parse the number and units.
-        LOG.debug("Basic structure found.  Trying to parse number and unit.");
-        String strNumber = matcher.group(1).toLowerCase();
-        String strUnits  = matcher.group(2).toLowerCase();
-        Double num = Double.valueOf(strNumber);
-        if (num == null || !strUnits.startsWith("s") && !strUnits.startsWith("m")) {
-          convo.sendIm(iDontUnderstand);
-          return;
-        }
-        
-        // Convert to milliseconds.
-        LOG.debug("Interval found: " + num + " " + strUnits);
-        if (strUnits.startsWith("m")) {
-          num *= 60d;
-        }
-        num *= 1000d;
-        long period = Math.round(num);
-        
-        // Prevent people from setting this too low.
-        period = Math.max(period, 500);
-
-        // Set new period.
-        convo.sendIm("ok, i'll send updates every " + formatPeriod(period));
-        convo.setMinMillisecondsBetweenMessages(period);
-      }
-      else if (msg.equalsIgnoreCase("status") || msg.equalsIgnoreCase("st")) {
-        convo.sendIm(convo.toHumanReadableString());
-      }
-      else if (msg.startsWith("echo")) {
-        convo.sendIm(msg);
-      }
-      else if (newConvo) {
-        convo.sendIm("hi, i'll start sending updates every " +
-                formatPeriod(convo.getMinMillisecondsBetweenMessages()));
-      }
-      else {
-        convo.sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes].");
       }
     }
     
