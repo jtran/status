@@ -4,9 +4,11 @@ import static com.plpatterns.status.Utils.formatPeriod;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -146,7 +148,7 @@ public class Conversation {
    * IMs. To a user, it shouldn't feel like they are talking to a bot, but
    * rather someone on the other end helping them.
    */
-  public void reactToIm(boolean newConvo, Message message) {
+  public void reactToIm(boolean newConvo, Message message, XmppAppender appender) {
     // Track when we've heard from this person.
     LOG.debug("setting last heard from...");
     setLastHeardFrom(new Date());
@@ -245,6 +247,15 @@ public class Conversation {
         sendIm(prelude + top);
       }
     }
+    else if (msg.startsWith("who")) {
+      List<String> ps = appender.getParticipants();
+      if (ps.size() == 1 && ps.get(0).equals(getChat().getParticipant())) {
+        sendIm("I'm only IMing you -- " + ps.get(0));
+      }
+      else {
+        sendIm("I'm IMing these people:\n" + StringUtils.join(ps.iterator(), "\n"));
+      }
+    }
     else if (msg.startsWith("echo")) {
       sendIm(msg);
     }
@@ -253,7 +264,13 @@ public class Conversation {
               formatPeriod(getMinMillisecondsBetweenMessages()));
     }
     else {
-      sendIm("huh?  the commands I understand are: start, stop, every N s[econds], every N m[inutes], set level <log-level>, status, system.");
+      sendIm("huh?  the commands I understand are: " +
+      		"start, stop, " +
+      		"every N s[econds], every N m[inutes], " +
+      		"set level <log-level>, " +
+      		"status, " +
+      		"system, " +
+      		"who.");
     }
   }
 

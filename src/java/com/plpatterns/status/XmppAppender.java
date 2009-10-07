@@ -2,9 +2,11 @@ package com.plpatterns.status;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang.ObjectUtils;
@@ -301,6 +303,9 @@ public class XmppAppender extends AppenderSkeleton {
     return false;
   }
   
+  /**
+   * Assumes conversations has been locked and is safe to modify.
+   */
   private Conversation removeConversation(String participant) {
     Iterator<Conversation> it = getConversations().iterator();
     while (it.hasNext()) {
@@ -311,6 +316,22 @@ public class XmppAppender extends AppenderSkeleton {
       }
     }
     return null;
+  }
+  
+  public List<String> getParticipants() {
+    LinkedList<Conversation> convos = getConversations();
+    List<String> participants;
+
+    // Lock conversations before iterating.
+    synchronized(convos) {
+      // Copy participants.
+      participants = new ArrayList<String>(convos.size());
+      for (Conversation c : convos) {
+        participants.add(c.getChat().getParticipant());
+      }
+    }
+    
+    return participants;
   }
   
   private class XmppChatManagerListener implements ChatManagerListener {
@@ -375,7 +396,7 @@ public class XmppAppender extends AppenderSkeleton {
         }
 
         // Process the message itself.
-        convo.reactToIm(newConvo, message);
+        convo.reactToIm(newConvo, message, XmppAppender.this);
 
         // Let the person know we're evicting them.
         if (oldConvo != null) {
