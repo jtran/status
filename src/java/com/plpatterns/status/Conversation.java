@@ -17,6 +17,7 @@ import org.apache.log4j.spi.LoggingEvent;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Message.Type;
 
 /**
  * @author Jonathan Tran (jtran)
@@ -140,7 +141,15 @@ public class Conversation {
   public String toString() {
     return ReflectionToStringBuilder.toString(this);
   }
-
+  
+  private static boolean shouldReactToMessage(Message message) {
+    return !isBlank(message.getBody()) &&
+           (
+              message.getType() == Type.chat ||
+              message.getType() == Type.groupchat ||
+              message.getType() == Type.normal
+           );
+  }
 
   /**
    * This function processes commands in an incoming message. The responses are
@@ -154,8 +163,8 @@ public class Conversation {
     setLastHeardFrom(new Date());
     
     String msg = message.getBody();
-    LOG.debug("reacting to IM... convo: " + this + " newConvo: " + newConvo + " msg: " + msg);
-    if (isBlank(msg)) return;
+    LOG.debug("reacting to IM... convo: " + this + " newConvo: " + newConvo + ", type: " + message.getType() + " msg: " + msg);
+    if (!shouldReactToMessage(message)) return;
     
     if (msg.equalsIgnoreCase("pause") || msg.equalsIgnoreCase("stop")) {
       setPaused(true);
@@ -264,6 +273,9 @@ public class Conversation {
               formatPeriod(getMinMillisecondsBetweenMessages()));
     }
     else {
+      LOG.debug("got message I don't understand, from: " + message.getFrom() +
+              ", to: " + message.getTo() + ", thread: " + message.getThread() +
+              ", type: " + message.getType() + ", msg: " + msg);
       sendIm("huh?  the commands I understand are: " +
       		"start, stop, " +
       		"every N s[econds], every N m[inutes], " +
