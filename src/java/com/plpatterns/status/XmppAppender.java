@@ -13,7 +13,6 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManagerListener;
@@ -306,7 +305,7 @@ public class XmppAppender extends AppenderSkeleton {
   /**
    * Assumes conversations has been locked and is safe to modify.
    */
-  private Conversation removeConversation(String participant) {
+  public Conversation removeConversation(String participant) {
     Iterator<Conversation> it = getConversations().iterator();
     while (it.hasNext()) {
       Conversation convo = it.next();

@@ -265,6 +265,12 @@ public class Conversation {
         sendIm("I'm IMing these people:\n" + StringUtils.join(ps.iterator(), "\n"));
       }
     }
+    else if (msg.startsWith("bye")) {
+      synchronized (appender.getConversations()) {
+        appender.removeConversation(getChat().getParticipant());
+      }
+      sendIm("bye");
+    }
     else if (msg.startsWith("echo")) {
       sendIm(msg);
     }
